@@ -1,37 +1,37 @@
-package src
+package bc
 
 //	singleton pattern
 var mempool MemPool
 
 type MemPool interface {
-	GetTrxs() []*trx
-	AddTrx(t *trx)
+	GetTrxs() []*Trx
+	AddTrx(t *Trx)
 	Clear()
 }
 
 type memPool struct {
-	CurrentTrxs []*trx
+	CurrentTrxs []*Trx
 }
 
 //	return mempool instance
 func GetMemPool() MemPool {
 	if mempool == nil {
-		mempool = &memPool{CurrentTrxs: make([]*trx, 0)}
+		mempool = &memPool{CurrentTrxs: make([]*Trx, 0)}
 	}
 	return mempool
 }
 
 //	Delete all trxs in mempool
 func (m *memPool) Clear() {
-	m.CurrentTrxs = make([]*trx, 0)
+	m.CurrentTrxs = make([]*Trx, 0)
 }
 
 //	return current trxs in mempool
-func (m *memPool) GetTrxs() []*trx {
+func (m *memPool) GetTrxs() []*Trx {
 	return m.CurrentTrxs
 }
 
-//	Add trx to the mempool
-func (m *memPool) AddTrx(t *trx) {
+//	Add Trx to the mempool
+func (m *memPool) AddTrx(t *Trx) {
 	m.CurrentTrxs = append(m.CurrentTrxs, t)
 }

@@ -1,4 +1,4 @@
-package src
+package bc
 
 type Chain interface {
 	NewBlock(proof string, previousHash string) *block
@@ -25,3 +25,4 @@ func (c *chain) NewBlock(proof string, previousHash string) *block {
 func (c *chain) LastBlock() *block {
 	return c.Blocks[len(c.Blocks)-1]
 }
+

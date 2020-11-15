@@ -1,4 +1,4 @@
-package src
+package crypto
 
 import (
 	"crypto/sha256"
