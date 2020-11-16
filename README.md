@@ -51,6 +51,7 @@ result:
 ```
 
 - **Mine another block and see the Chain again**
+
 request:
 ```text
 curl http://localhost:8000/mine
