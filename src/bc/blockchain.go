@@ -14,7 +14,6 @@ const (
 	//	makes a huge difference to the time required to find a solution.
 	DifficultyLvl = "0000"
 	MiningReward  = 12.5
-	InitialCoins  = 100
 )
 
 type Blockchain interface {
@@ -40,18 +39,19 @@ func NewBlockchain(yourAddress string) Blockchain {
 }
 
 func createGenesisBlock(address string) block {
-	gHash, _ := crypto.Hash(crypto.HashSHA256, "this is your bc:"+address+":genesis block")
-	return block{
+	b := block{
 		Index:     1,
 		Timestamp: time.Now().UTC().Unix(),
 		Trxs: []*trx{{
 			Sender:    "",
 			Recipient: address,
-			Amount:    InitialCoins,
+			Amount:    MiningReward,
 		}},
 		Nonce:        0,
-		PreviousHash: gHash,
+		PreviousHash: "",
 	}
+	b.Nonce = newPOW().findNonce(b)
+	return b
 }
 
 func (b *blockchain) GetChain() []*block {
