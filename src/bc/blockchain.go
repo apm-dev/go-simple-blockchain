@@ -1,7 +1,6 @@
 package bc
 
 import (
-	"errors"
 	"github.com/apm-dev/go-simple-blockchain/src/crypto"
 	"time"
 )
@@ -19,39 +18,21 @@ const (
 type Blockchain interface {
 	GetChain() []*block
 	NewTrx(sender string, recipient string, amount float32)
-	Mine() error
+	Mine(minerPKH string) error
 }
 
 type blockchain struct {
 	memPool   MemPool
 	pow       POW
 	chain     Chain
-	myAddress string
 }
 
-func NewBlockchain(yourAddress string) Blockchain {
+func NewBlockchain() Blockchain {
 	return &blockchain{
 		memPool:   newMemPool(),
 		pow:       newPOW(),
-		chain:     newChain(createGenesisBlock(yourAddress)),
-		myAddress: yourAddress,
+		chain:     newChain(),
 	}
-}
-
-func createGenesisBlock(address string) block {
-	b := block{
-		Index:     1,
-		Timestamp: time.Now().UTC().Unix(),
-		Trxs: []*trx{{
-			Sender:    "",
-			Recipient: address,
-			Amount:    MiningReward,
-		}},
-		Nonce:        0,
-		PreviousHash: "",
-	}
-	b.Nonce = newPOW().findNonce(b)
-	return b
 }
 
 func (b *blockchain) GetChain() []*block {
@@ -66,34 +47,49 @@ func (b *blockchain) NewTrx(sender string, recipient string, amount float32) {
 	})
 }
 
-func (b *blockchain) Mine() error {
+func (b *blockchain) Mine(minerPKH string) error {
+	var pHash string
+	var newBlockIndex int32
+
 	lastBlock := b.chain.lastBlock()
+	//	Check is it genesis block or not
 	if lastBlock == nil {
-		return errors.New("there is no genesis block in the chain")
+		pHash = ""
+		newBlockIndex = 1
+	} else {
+		var err error
+		pHash, err = crypto.Hash(crypto.HashSHA256, lastBlock)
+		if err != nil {
+			return err
+		}
+		newBlockIndex = lastBlock.Index + 1
 	}
-	pHash, err := crypto.Hash(crypto.HashSHA256, lastBlock)
-	if err != nil {
-		return err
-	}
+
+	//	Create reward trx and add it to mempool
 	rewardTrx := trx{
 		Sender:    "",
-		Recipient: b.myAddress,
+		Recipient: minerPKH,
 		Amount:    MiningReward,
 	}
 	b.memPool.addTrx(&rewardTrx)
+
+	//	create new block template
 	newBlock := block{
-		Index:        lastBlock.Index + 1,
+		Index:        newBlockIndex,
 		Timestamp:    time.Now().UTC().Unix(),
 		Trxs:         b.memPool.getTrxs(),
 		Nonce:        0,
 		PreviousHash: pHash,
 	}
-
+	//	Find and set a nonce for new block
 	newBlock.Nonce = b.pow.findNonce(newBlock)
-	err = b.chain.addBlock(newBlock)
+
+	//	Add new block to the chain
+	err := b.chain.addBlock(newBlock)
 	if err != nil {
 		return err
 	}
+	//	When block created should clear mempool for new trxs
 	b.memPool.clear()
 	return nil
 }

@@ -16,20 +16,22 @@ type chain struct {
 }
 
 //	create new chain with genesis block
-func newChain(gb block) Chain {
-	c := chain{}
-	c.Blocks = append(c.Blocks, &gb)
-	return &c
+func newChain() Chain {
+	return &chain{}
 }
 
 //	Add new block to the chain
 func (c *chain) addBlock(b block) error {
-	lbh, err := crypto.Hash(crypto.HashSHA256, c.lastBlock())
-	if err != nil {
-		return err
-	}
-	if lbh != b.PreviousHash {
-		return errors.New("the block is invalid")
+	//	Validate new block previous hash with last block hash
+	//	if it was not genesis block
+	if c.lastBlock() != nil {
+		lbh, err := crypto.Hash(crypto.HashSHA256, c.lastBlock())
+		if err != nil {
+			return err
+		}
+		if lbh != b.PreviousHash {
+			return errors.New("the block is invalid")
+		}
 	}
 	c.Blocks = append(c.Blocks, &b)
 	return nil
@@ -37,6 +39,9 @@ func (c *chain) addBlock(b block) error {
 
 //	return last block of the chain
 func (c *chain) lastBlock() *block {
+	if len(c.Blocks) == 0 {
+		return nil
+	}
 	return c.Blocks[len(c.Blocks)-1]
 }
 
